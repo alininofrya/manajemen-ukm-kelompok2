@@ -108,7 +108,7 @@
                         <div class="event-card">
                             <div class="event-img-container">
                                 <span class="category-badge">Hot Event</span>
-                                <img src="{{ $event->poster ? asset('storage/' . $event->poster) : 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?auto=format&fit=crop&w=800' }}" alt="Poster">
+                                <img src="{{ $event->poster ? asset('storage/posters/' . $event->poster) : 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?auto=format&fit=crop&w=800' }}" alt="Poster">
                             </div>
                             <div class="event-info">
                                 <div class="ukm-name"><i class="fa fa-users me-2"></i>{{ $event->ukm->nama_ukm }}</div>

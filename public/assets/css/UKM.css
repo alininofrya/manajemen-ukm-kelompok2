@@ -1,0 +1,94 @@
+    body {
+      font-family: 'Poppins', sans-serif;
+      background: #ffffff;
+    }
+
+    /* HEADER */
+    .navbar {
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+    }
+
+    /* PAGE TITLE */
+    #page-header {
+      padding-top: 140px;
+      padding-bottom: 40px;
+      text-align: center;
+    }
+
+    #page-header h2 {
+      font-weight: 700;
+      font-size: 2.2rem;
+    }
+
+    #page-header p {
+      color: #555;
+      max-width: 650px;
+      margin: auto;
+      font-size: 1rem;
+    }
+
+    /* CARD UKM */
+    .ukm-card {
+      border-radius: 18px;
+      padding: 20px;
+      background: #fff;
+      border: 1px solid #e8e8e8;
+      transition: 0.25s;
+      display: flex;
+      gap: 18px;
+    }
+
+    .ukm-card:hover {
+      transform: translateY(-6px);
+      box-shadow: 0 10px 32px rgba(0, 0, 0, 0.12);
+    }
+
+    .ukm-card img {
+      width: 150px;
+      height: 120px;
+      border-radius: 14px;
+      object-fit: cover;
+    }
+
+    .ukm-card h5 {
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+
+    .ukm-card p {
+      font-size: 0.9rem;
+      color: #666;
+      margin-bottom: 8px;
+    }
+
+    .points {
+      font-weight: 600;
+      color: #007bff;
+    }
+
+    .btn-ukm {
+      width: 100%;
+      border-radius: 50px;
+      padding: 8px;
+    }
+
+    .btn-ukm a {
+      color: aliceblue;
+      text-decoration: none;
+    }
+
+    /* FOOTER */
+    footer {
+      background: #1a1a1a;
+      padding: 40px 0;
+      color: #ccc;
+      margin-top: 80px;
+    }
+
+    footer a {
+      color: #bdbdbd;
+    }
+
+    footer a:hover {
+      color: #fff;
+    }

@@ -9,12 +9,21 @@ use Illuminate\Support\Facades\Hash;
 
 class UserController extends Controller
 {
-    public function index()
-    {
-        // Mengambil semua user kecuali admin yang sedang login
-        $users = User::where('id', '!=', auth()->id())->latest()->get();
-        return view('admin.users.index', compact('users'));
+    public function index(Request $request) // Pastikan ada Request untuk fitur search nanti
+{
+    $users = User::where('id', '!=', auth()->id());
+
+    if ($request->has('search')) {
+        $users->where(function($q) use ($request) {
+            $q->where('name', 'LIKE', '%'.$request->search.'%')
+              ->orWhere('email', 'LIKE', '%'.$request->search.'%');
+        });
     }
+
+    $users = $users->latest()->paginate(10);
+
+    return view('admin.users.index', compact('users'));
+}
 
     public function store(Request $request)
     {

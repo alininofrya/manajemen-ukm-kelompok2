@@ -12,12 +12,32 @@
             </button>
         </div>
 
-        @if(session('success'))
+        @if (session('success'))
             <div class="alert alert-success alert-dismissible fade show border-0 shadow-sm mb-4" role="alert">
                 <i class="fas fa-check-circle me-2"></i> {{ session('success') }}
                 <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
             </div>
         @endif
+
+        <div class="card-header bg-white border-0 py-3">
+            <div class="row">
+                <div class="col-md-4">
+                    <h5 class="mb-0 fw-bold text-primary mt-2">Daftar Pengguna</h5>
+                </div>
+                <div class="col-md-8">
+                    <form action="{{ route('admin.users.index') }}" method="GET">
+                        <div class="input-group">
+                            <input type="text" class="form-control" name="search" placeholder="Cari nama atau email..."
+                                value="{{ request('search') }}">
+                            <button class="btn btn-primary" type="submit">Cari</button>
+                            @if (request('search'))
+                                <a href="{{ route('admin.users.index') }}" class="btn btn-light border">Reset</a>
+                            @endif
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
 
         <div class="row">
             <div class="col-md-12">
@@ -34,7 +54,7 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    @foreach($users as $user)
+                                    @foreach ($users as $user)
                                         <tr>
                                             <td class="px-4 fw-bold text-dark">{{ $user->name }}</td>
                                             <td>{{ $user->email }}</td>
@@ -60,7 +80,8 @@
                                             </td>
                                         </tr>
 
-                                        <div class="modal fade" id="modalEdit{{ $user->id }}" tabindex="-1" aria-hidden="true">
+                                        <div class="modal fade" id="modalEdit{{ $user->id }}" tabindex="-1"
+                                            aria-hidden="true">
                                             <div class="modal-dialog">
                                                 <div class="modal-content">
                                                     <div class="modal-header border-0">
@@ -68,7 +89,8 @@
                                                         <button type="button" class="btn-close"
                                                             data-bs-dismiss="modal"></button>
                                                     </div>
-                                                    <form action="{{ route('admin.users.update', $user->id) }}" method="POST">
+                                                    <form action="{{ route('admin.users.update', $user->id) }}"
+                                                        method="POST">
                                                         @csrf
                                                         @method('PUT')
                                                         <div class="modal-body">
@@ -85,9 +107,15 @@
                                                             <div class="form-group mb-3">
                                                                 <label class="form-label fw-bold">Role Hak Akses</label>
                                                                 <select name="role" class="form-control" required>
-                                                                    <option value="mahasiswa" {{ $user->role == 'mahasiswa' ? 'selected' : '' }}>Mahasiswa</option>
-                                                                    <option value="pengurus" {{ $user->role == 'pengurus' ? 'selected' : '' }}>Pengurus</option>
-                                                                    <option value="admin" {{ $user->role == 'admin' ? 'selected' : '' }}>Admin</option>
+                                                                    <option value="mahasiswa"
+                                                                        {{ $user->role == 'mahasiswa' ? 'selected' : '' }}>
+                                                                        Mahasiswa</option>
+                                                                    <option value="pengurus"
+                                                                        {{ $user->role == 'pengurus' ? 'selected' : '' }}>
+                                                                        Pengurus</option>
+                                                                    <option value="admin"
+                                                                        {{ $user->role == 'admin' ? 'selected' : '' }}>
+                                                                        Admin</option>
                                                                 </select>
                                                             </div>
                                                         </div>
@@ -123,11 +151,13 @@
                     <div class="modal-body">
                         <div class="form-group mb-3">
                             <label>Nama</label>
-                            <input type="text" name="name" class="form-control" placeholder="Nama Lengkap" required>
+                            <input type="text" name="name" class="form-control" placeholder="Nama Lengkap"
+                                required>
                         </div>
                         <div class="form-group mb-3">
                             <label>Email</label>
-                            <input type="email" name="email" class="form-control" placeholder="Email Aktif" required>
+                            <input type="email" name="email" class="form-control" placeholder="Email Aktif"
+                                required>
                         </div>
                         <div class="form-group mb-3">
                             <label>Role</label>

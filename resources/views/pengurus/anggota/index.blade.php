@@ -22,6 +22,33 @@
         <div class="row fade-in-up" style="animation-delay: 0.2s">
             <div class="col-md-12">
                 <div class="card card-member border-0 shadow-sm">
+
+                    {{-- HEADER: PENCARIAN --}}
+                    <div class="card-header bg-white border-0 py-3">
+                        <div class="row align-items-center">
+                            <div class="col-md-4">
+                                <h5 class="mb-0 fw-bold text-primary">Data Anggota</h5>
+                            </div>
+                            <div class="col-md-8">
+                                <form action="{{ route('pengurus.anggota.index') }}" method="GET">
+                                    <div class="input-group">
+                                        <input type="text" class="form-control border-end-0" name="search"
+                                               placeholder="Cari nama, email, atau jabatan..."
+                                               value="{{ request('search') }}" style="border-radius: 8px 0 0 8px;">
+                                        <button class="btn btn-primary text-white" type="submit" style="border-radius: 0 8px 8px 0;">
+                                            <i class="fas fa-search"></i> Cari
+                                        </button>
+                                        @if(request('search'))
+                                            <a href="{{ route('pengurus.anggota.index') }}" class="btn btn-light ms-2 rounded" title="Reset">
+                                                <i class="fas fa-sync-alt"></i>
+                                            </a>
+                                        @endif
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+
                     <div class="card-body p-0">
                         <div class="table-responsive">
                             <table class="table table-modern mb-0">
@@ -78,6 +105,7 @@
                                             </td>
                                         </tr>
 
+                                        {{-- MODAL EDIT TETAP DISINI (SAMA SEPERTI SEBELUMNYA) --}}
                                         <div class="modal fade" id="modalEdit{{ $row->id }}" tabindex="-1" aria-hidden="true">
                                             <div class="modal-dialog">
                                                 <div class="modal-content">
@@ -95,7 +123,7 @@
                                                                 <label class="form-label fw-bold">Nama Lengkap</label>
                                                                 <input type="text" name="name" class="form-control" value="{{ $row->user->name }}" required>
                                                             </div>
-                                                            
+
                                                             <div class="form-group mb-3 text-start">
                                                                 <label class="form-label fw-bold">Email</label>
                                                                 <input type="email" name="email" class="form-control" value="{{ $row->user->email }}" required>
@@ -114,22 +142,41 @@
                                                 </div>
                                             </div>
                                         </div>
+
                                     @empty
                                         <tr>
                                             <td colspan="4" class="text-center py-5">
-                                                <p class="text-muted">Belum ada anggota yang terdaftar.</p>
+                                                <div class="d-flex flex-column align-items-center">
+                                                    <i class="fas fa-search fa-3x text-muted mb-3 opacity-50"></i>
+                                                    <h6 class="text-muted fw-bold">Data tidak ditemukan</h6>
+                                                    <p class="text-muted small">Coba kata kunci pencarian lain.</p>
+                                                </div>
                                             </td>
                                         </tr>
                                     @endforelse
                                 </tbody>
                             </table>
                         </div>
+
+                        {{-- FOOTER: PAGINATION LINK --}}
+                        <div class="card-footer bg-white border-0 py-3">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div class="text-muted small">
+                                    Menampilkan {{ $anggota->firstItem() ?? 0 }} sampai {{ $anggota->lastItem() ?? 0 }} dari {{ $anggota->total() }} anggota
+                                </div>
+                                <div>
+                                    {{ $anggota->links('pagination::bootstrap-5') }}
+                                </div>
+                            </div>
+                        </div>
+
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
+    {{-- MODAL TAMBAH ANGGOTA (TETAP SAMA) --}}
     <div class="modal fade" id="modalTambahAnggota" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog">
             <div class="modal-content">
@@ -163,7 +210,9 @@
         </div>
     </div>
 
+    {{-- CSS TAMBAHAN AGAR PAGINATION RAPI --}}
     <style>
+        /* Style yang sudah ada tetap dipertahankan */
         .btn-action-custom {
             background: none;
             border: none;
@@ -191,7 +240,7 @@
             animation: fadeInUp 0.5s ease-out forwards;
         }
 
-        @for ($i = 1; $i <= 20; $i++)
+        @for ($i = 1; $i <= 10; $i++)
             .table tbody tr:nth-child({{ $i }}) {
                 animation-delay: {{ 0.1 + ($i * 0.05) }}s;
             }
@@ -245,8 +294,22 @@
 
         .badge-ketua { background-color: #f0f7ff; color: #007bff; }
         .badge-anggota { background-color: #f0fff4; color: #28a745; }
-        
-        /* Form Label Styling */
+
         .form-label { color: #525f7f; font-size: 0.9rem; }
+
+        /* Pagination Custom Style agar senada */
+        .pagination .page-item .page-link {
+            border: none;
+            border-radius: 8px;
+            margin: 0 3px;
+            color: #525f7f;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+        .pagination .page-item.active .page-link {
+            background-color: var(--primary); /* Menggunakan variabel warna tema */
+            color: white;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
     </style>
 @endsection

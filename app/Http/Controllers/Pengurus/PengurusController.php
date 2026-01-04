@@ -17,13 +17,24 @@ class PengurusController extends Controller
     {
         // Mengambil data anggota dan UKM yang dikelola pengurus yang sedang login
         $member = Member::where('user_id', Auth::id())->first();
+
+        // --- PERBAIKAN: Cek apakah user ini terdaftar sebagai member/pengurus ---
+        if (!$member) {
+            return redirect('/')->with('error', 'Akun Anda tidak terdaftar sebagai Pengurus UKM.');
+        }
+
         $ukm = Ukm::find($member->ukm_id);
+
+        // Cek jika UKM nya tidak ditemukan (misal terhapus)
+        if (!$ukm) {
+            return redirect('/')->with('error', 'Data UKM tidak ditemukan.');
+        }
 
         // Menghitung total data untuk statistik di dashboard
         $totalEvent = Event::where('ukm_id', $ukm->id)->count();
         $totalAnggota = Member::where('ukm_id', $ukm->id)->count();
 
-        // PERBAIKAN: Mengambil 5 pendaftar terbaru yang mendaftar ke event milik UKM ini
+        // Mengambil 5 pendaftar terbaru yang mendaftar ke event milik UKM ini
         $pendaftarTerbaru = Pendaftaran::whereHas('event', function ($query) use ($ukm) {
             $query->where('ukm_id', $ukm->id);
         })->with(['user', 'event'])->latest()->take(5)->get();
@@ -34,30 +45,50 @@ class PengurusController extends Controller
         return view('pengurus.dashboard', compact('ukm', 'member', 'totalEvent', 'totalAnggota', 'events', 'pendaftarTerbaru'));
     }
 
-    public function anggotaIndex()
-    {
-        $member = Member::where('user_id', Auth::id())->first();
-        if (!$member)
-            return redirect()->back()->with('error', 'Data tidak ditemukan.');
+public function anggotaIndex(Request $request)
+{
+    $member = Member::where('user_id', Auth::id())->first();
 
-        $ukm = Ukm::find($member->ukm_id);
-
-        // Ambil daftar anggota UKM saat ini
-        $anggota = Member::where('ukm_id', $ukm->id)->with('user')->get();
-
-        // OPSI A: Ambil semua mahasiswa agar bisa ditambah secara bebas
-        // Namun, kita filter agar mahasiswa yang SUDAH jadi anggota di UKM ini tidak muncul lagi di pilihan
-        $users = User::where('role', 'mahasiswa')
-            ->whereDoesntHave('member', function ($query) use ($ukm) {
-                $query->where('ukm_id', $ukm->id);
-            })->get();
-
-        return view('pengurus.anggota.index', compact('ukm', 'anggota', 'users'));
+    if (!$member) {
+        return redirect()->back()->with('error', 'Akses ditolak. Anda bukan pengurus.');
     }
+
+    $ukm = Ukm::find($member->ukm_id);
+
+    // --- LOGIKA PENCARIAN & PAGINATION ---
+    $query = Member::where('ukm_id', $ukm->id)->with('user');
+
+    // Jika ada input pencarian
+    if ($request->has('search')) {
+        $search = $request->search;
+        $query->whereHas('user', function($q) use ($search) {
+            $q->where('name', 'LIKE', "%{$search}%")
+              ->orWhere('email', 'LIKE', "%{$search}%");
+        })->orWhere('jabatan', 'LIKE', "%{$search}%")
+          ->where('ukm_id', $ukm->id); // Pastikan tetap di UKM yang sama
+    }
+
+    // Ambil data dengan pagination (10 data per halaman)
+    // append(['search' => ...]) berguna agar saat pindah halaman, pencarian tidak hilang
+    $anggota = $query->paginate(10)->appends(['search' => $request->search]);
+
+    // Ambil user untuk modal tambah (tetap sama)
+    $users = User::where('role', 'mahasiswa')
+        ->whereDoesntHave('member', function ($query) use ($ukm) {
+            $query->where('ukm_id', $ukm->id);
+        })->get();
+
+    return view('pengurus.anggota.index', compact('ukm', 'anggota', 'users'));
+}
 
     public function anggotaStore(Request $request)
     {
         $admin = Member::where('user_id', Auth::id())->first();
+
+        // --- PERBAIKAN: Validasi Member ---
+        if (!$admin) {
+            return redirect()->back()->with('error', 'Akses Ditolak.');
+        }
 
         $request->validate([
             'user_id' => 'required|exists:users,id',
@@ -84,13 +115,16 @@ class PengurusController extends Controller
 
     public function anggotaUpdate(Request $request, $id)
     {
+        // Ambil member dulu untuk validasi email unik
+        $member = Member::findOrFail($id);
+
         $request->validate([
             'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:users,email,' . Member::find($id)->user_id,
+            // Perbaikan validasi email: ignore email milik user yang sedang diedit
+            'email' => 'required|email|unique:users,email,' . $member->user_id,
             'jabatan' => 'required|string|max:255',
         ]);
 
-        $member = Member::findOrFail($id);
         $member->update([
             'jabatan' => $request->jabatan
         ]);
@@ -115,6 +149,11 @@ class PengurusController extends Controller
     public function pendaftar()
     {
         $member = Member::where('user_id', Auth::id())->first();
+
+        // --- PERBAIKAN: Validasi Member ---
+        if (!$member) {
+            return redirect('/')->with('error', 'Akses Ditolak.');
+        }
 
         // Ambil semua pendaftaran yang masuk ke event-event milik UKM pengurus ini
         $pendaftarans = Pendaftaran::whereHas('event', function ($query) use ($member) {

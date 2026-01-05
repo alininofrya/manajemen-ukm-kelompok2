@@ -136,7 +136,7 @@ class PengurusController extends Controller
 
     // --- FUNGSI DOWNLOAD BERKAS (SUDAH DI TEMPAT YANG BENAR) ---
 // Ganti nama fungsinya biar lebih sesuai, atau biarkan downloadBerkas tapi isinya ini:
-    public function downloadBerkas($id)
+public function downloadBerkas($id)
     {
         $pendaftar = Pendaftaran::findOrFail($id);
 
@@ -144,23 +144,38 @@ class PengurusController extends Controller
             return back()->with('error', 'File tidak ditemukan di database.');
         }
 
-        // Bersihkan path
-        $cleanPath = str_replace('public/', '', $pendaftar->berkas);
+        // 1. Bersihkan nama file
+        // Kadang database nyimpen "public/foto.jpg", kadang cuma "foto.jpg"
+        $rawPath = $pendaftar->berkas;
+        $cleanPath = str_replace(['public/', 'storage/'], '', $rawPath);
 
-        // Cek keberadaan file
-        if (Storage::disk('public')->exists($cleanPath)) {
-            // Ambil full path fisik untuk ditampilkan
-            $pathFisik = Storage::disk('public')->path($cleanPath);
+        // --- CEK GUDANG A (Storage Link) ---
+        $pathStorage = storage_path('app/public/' . $cleanPath);
 
-            // ERROR HANDLING: Cek tipe file (opsional, biar aman)
-            $mime = mime_content_type($pathFisik);
+        // --- CEK GUDANG B (Public Folder Langsung) ---
+        // Ini sering kejadian kalau pakai $file->move() bukan $file->store()
+        $pathPublic = public_path($rawPath);
+        $pathPublicClean = public_path($cleanPath);
+        $pathUploads = public_path('uploads/' . $cleanPath);
 
-            // Tampilkan file di browser (Preview)
-            return response()->file($pathFisik, [
-                'Content-Type' => $mime
+        $finalPath = null;
+
+        if (file_exists($pathStorage)) {
+            $finalPath = $pathStorage;
+        } elseif (file_exists($pathPublic)) {
+            $finalPath = $pathPublic;
+        } elseif (file_exists($pathPublicClean)) {
+            $finalPath = $pathPublicClean;
+        } elseif (file_exists($pathUploads)) {
+            $finalPath = $pathUploads;
+        }
+
+        if ($finalPath) {
+            return response()->file($finalPath, [
+                'Content-Type' => mime_content_type($finalPath)
             ]);
         }
 
-        return back()->with('error', 'File fisik (gambar/pdf) hilang dari server. Silakan upload ulang.');
+        return back()->with('error', "Gagal! File tidak ditemukan di: Storage maupun Public Folder. (Nama File: $cleanPath)");
     }
 }

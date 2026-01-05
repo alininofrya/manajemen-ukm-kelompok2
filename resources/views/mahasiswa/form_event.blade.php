@@ -8,11 +8,6 @@
                     <h5 class="fw-bold mb-0">Form Pendaftaran Event: {{ $event->nama_event }}</h5>
                 </div>
                 <div class="card-body">
-                    <div class="alert alert-info">
-                        <small><i class="fas fa-info-circle"></i> Silakan upload berkas persyaratan (KTM/Surat Izin) dalam
-                            format PDF atau Gambar.</small>
-                    </div>
-
                     <form action="{{ route('mahasiswa.event.simpan', $event->id) }}" method="POST"
                         enctype="multipart/form-data">
                         @csrf

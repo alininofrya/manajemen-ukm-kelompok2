@@ -135,26 +135,32 @@ class PengurusController extends Controller
     }
 
     // --- FUNGSI DOWNLOAD BERKAS (SUDAH DI TEMPAT YANG BENAR) ---
-public function downloadBerkas($id)
-{
-    $pendaftar = Pendaftaran::findOrFail($id);
+// Ganti nama fungsinya biar lebih sesuai, atau biarkan downloadBerkas tapi isinya ini:
+    public function downloadBerkas($id)
+    {
+        $pendaftar = Pendaftaran::findOrFail($id);
 
-    // Bersihkan path
-    $cleanPath = str_replace('public/', '', $pendaftar->berkas);
+        if (!$pendaftar->berkas) {
+            return back()->with('error', 'File tidak ditemukan di database.');
+        }
 
-    // Cek path lengkap di server (Linux path)
-    $fullPath = storage_path('app/public/' . $cleanPath);
+        // Bersihkan path
+        $cleanPath = str_replace('public/', '', $pendaftar->berkas);
 
-    // --- MATIKAN PROGRAM & TAMPILKAN INFO (DEBUG) ---
-    dd([
-        'ID' => $id,
-        'Nama File di Database' => $pendaftar->berkas,
-        'Path Bersih' => $cleanPath,
-        'Lokasi Full di Server' => $fullPath,
-        'Apakah File Ada?' => file_exists($fullPath) ? 'ADA' : 'TIDAK ADA (ZONK)',
-        'Cek Storage Laravel' => Storage::disk('public')->exists($cleanPath) ? 'ADA' : 'TIDAK TERBACA'
-    ]);
+        // Cek keberadaan file
+        if (Storage::disk('public')->exists($cleanPath)) {
+            // Ambil full path fisik untuk ditampilkan
+            $pathFisik = Storage::disk('public')->path($cleanPath);
 
-    // ... kode bawahnya abaikan dulu karena program akan mati di dd()
-}
+            // ERROR HANDLING: Cek tipe file (opsional, biar aman)
+            $mime = mime_content_type($pathFisik);
+
+            // Tampilkan file di browser (Preview)
+            return response()->file($pathFisik, [
+                'Content-Type' => $mime
+            ]);
+        }
+
+        return back()->with('error', 'File fisik (gambar/pdf) hilang dari server. Silakan upload ulang.');
+    }
 }

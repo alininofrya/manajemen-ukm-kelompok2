@@ -82,7 +82,7 @@ public function simpanPendaftaran(Request $request, $id)
     {
         // 1. Validasi: Sekarang yang dicek adalah TEKS, bukan File
         $request->validate([
-            'alasan' => 'required|string|max:1000', // Wajib isi alasan
+            'alasan' => 'required|string|max:3000', // Wajib isi alasan
         ]);
 
         // 2. Cek duplikasi (biar gak daftar 2x)

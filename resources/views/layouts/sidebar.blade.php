@@ -103,14 +103,7 @@
                             <p>Cari Event & UKM</p>
                         </a>
                     </li>
-                    <li class="nav-item">
-                        <a href="#">
-                            <i class="fas fa-user-edit"></i>
-                            <p>Profil Saya</p>
-                        </a>
-                    </li>
                 @endif
-
             </ul>
         </div>
     </div>

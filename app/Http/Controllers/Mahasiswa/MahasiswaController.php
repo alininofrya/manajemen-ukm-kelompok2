@@ -7,6 +7,7 @@ use App\Models\Ukm;
 use App\Models\Pendaftaran;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage; // Tambahan library Storage
 
 class MahasiswaController extends Controller
 {
@@ -16,7 +17,6 @@ class MahasiswaController extends Controller
         $ukms = Ukm::all();
 
         // 2. Ambil pendaftaran event milik mahasiswa yang sedang login
-        // Kita filter yang event_id-nya tidak null
         $myEvents = Pendaftaran::where('user_id', auth()->id())
             ->whereNotNull('event_id')
             ->with('event.ukm')
@@ -47,6 +47,7 @@ class MahasiswaController extends Controller
 
         return redirect()->back()->with('success', 'Berhasil mendaftar! Tunggu konfirmasi pengurus.');
     }
+
     public function daftarEvent($id)
     {
         // 1. Validasi: Cek apakah mahasiswa sudah mendaftar di event ini
@@ -67,7 +68,7 @@ class MahasiswaController extends Controller
             'berkas' => null,      // Berkas opsional untuk event
         ]);
 
-        // 3. Redirect ke dashboard mahasiswa (Kaia Template)
+        // 3. Redirect ke dashboard mahasiswa
         return redirect()->route('mahasiswa.dashboard')->with('success', 'Berhasil mendaftar event!');
     }
 
@@ -78,25 +79,41 @@ class MahasiswaController extends Controller
         return view('mahasiswa.form_event', compact('event'));
     }
 
+    // --- BAGIAN INI YANG DIPERBAIKI (AGAR FILE TERBACA OLEH PENGURUS) ---
     public function simpanPendaftaran(Request $request, $id)
     {
-        // Validasi berkas
+        // 1. Validasi berkas
         $request->validate([
-            'berkas' => 'required|mimes:pdf,jpg,png|max:2048', // Maksimal 2MB
+            'berkas' => 'required|mimes:pdf,jpg,png,jpeg|max:2048', // Maksimal 2MB
         ]);
 
-        // Simpan file ke folder public/uploads/berkas
-        $fileName = time() . '_' . auth()->id() . '.' . $request->berkas->extension();
-        $request->berkas->move(public_path('uploads/berkas'), $fileName);
+        // 2. Cek duplikasi pendaftaran (Biar gak double)
+        $exists = Pendaftaran::where('user_id', auth()->id())
+            ->where('event_id', $id)
+            ->exists();
 
-        // Simpan data ke tabel pendaftarans
+        if ($exists) {
+            return redirect()->route('mahasiswa.dashboard')->with('error', 'Kamu sudah mendaftar di event ini sebelumnya.');
+        }
+
+        // 3. SETUP NAMA FILE & PENYIMPANAN YANG BENAR
+        // Kita pakai format nama: WAKTU_IDUSER.EXTENSI (Contoh: 1767598004_3.pdf)
+        $fileName = time() . '_' . auth()->id() . '.' . $request->berkas->extension();
+
+        // PENTING: Gunakan storeAs ke folder 'public/pendaftaran'
+        // Ini akan otomatis masuk ke: storage/app/public/pendaftaran/
+        $request->file('berkas')->storeAs('public/pendaftaran', $fileName);
+
+        // 4. Simpan ke Database dengan Path Lengkap
+        // Kita simpan string: "public/pendaftaran/namafile.pdf"
+        // Nanti Controller Pengurus akan membersihkan kata "public/"-nya otomatis.
         Pendaftaran::create([
             'user_id' => auth()->id(),
             'event_id' => $id,
-            'berkas' => $fileName,
+            'berkas' => 'public/pendaftaran/' . $fileName, // Format Path diperbaiki
             'status' => 'pending',
         ]);
 
-        return redirect()->route('mahasiswa.dashboard')->with('success', 'Berhasil mendaftar event!');
+        return redirect()->route('mahasiswa.dashboard')->with('success', 'Berhasil mendaftar event! Berkas berhasil diupload.');
     }
 }

@@ -61,6 +61,11 @@ Route::middleware(['auth'])->group(function () {
         });
     });
 
+// Ini contoh, cari yang mirip di filemu
+Route::post('/event/daftar/{id}', [MahasiswaController::class, 'store']);
+// atau
+Route::post('/pendaftaran', [EventController::class, 'daftar']);
+
     // --- ROLE: MAHASISWA ---
     Route::middleware(['role:mahasiswa'])->group(function () {
         // Halaman Dashboard Utama Kaia

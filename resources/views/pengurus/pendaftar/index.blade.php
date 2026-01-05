@@ -36,6 +36,22 @@
                                         </tr>
                                     </thead>
                                     <tbody>
+                                        {{-- Letakkan ini di atas tabel atau di bawah navbar --}}
+                                        @if (session('error'))
+                                            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                                                <strong>Gagal!</strong> {{ session('error') }}
+                                                <button type="button" class="btn-close" data-bs-dismiss="alert"
+                                                    aria-label="Close"></button>
+                                            </div>
+                                        @endif
+
+                                        @if (session('success'))
+                                            <div class="alert alert-success alert-dismissible fade show" role="alert">
+                                                <strong>Berhasil!</strong> {{ session('success') }}
+                                                <button type="button" class="btn-close" data-bs-dismiss="alert"
+                                                    aria-label="Close"></button>
+                                            </div>
+                                        @endif
                                         @forelse($pendaftarans as $data)
                                             <tr>
                                                 <td class="fw-bold text-dark">
@@ -50,17 +66,15 @@
                                                     </div>
                                                 </td>
                                                 <td><span class="text-muted">{{ $data->event->nama_event }}</span></td>
-                                                <td>
-                                                    @if ($data->berkas)
-                                                        <a href="{{ route('pengurus.download', $data->id) }}"
-                                                            class="btn btn-sm btn-outline-secondary btn-round">
-                                                            <i class="fa fa-download me-1 text-danger"></i> Download Berkas
-                                                        </a>
-                                                        class="btn btn-sm btn-outline-secondary btn-round">
-                                                        <i class="fa fa-file-pdf me-1 text-danger"></i> Lihat Berkas
+                                                <td class="text-center">
+                                                    @if ($pendaftaran->berkas)
+                                                        <a href="{{ route('pengurus.download', $pendaftaran->id) }}"
+                                                            class="btn btn-sm btn-outline-secondary btn-round"
+                                                            target="_blank">
+                                                            <i class="fas fa-file-pdf"></i> Lihat Berkas
                                                         </a>
                                                     @else
-                                                        <span class="text-danger small fw-bold"><i>Tanpa Berkas</i></span>
+                                                        <span class="badge badge-danger">Tidak ada berkas</span>
                                                     @endif
                                                 </td>
                                                 <td>

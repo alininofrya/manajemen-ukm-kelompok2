@@ -135,21 +135,25 @@ class PengurusController extends Controller
     }
 
     // --- FUNGSI DOWNLOAD BERKAS (SUDAH DI TEMPAT YANG BENAR) ---
-    public function downloadBerkas($id)
-    {
-        $pendaftar = Pendaftaran::findOrFail($id);
+public function downloadBerkas($id)
+{
+    $pendaftar = Pendaftaran::findOrFail($id);
 
-        if (!$pendaftar->berkas) {
-            return back()->with('error', 'File tidak ditemukan di database.');
-        }
+    // Bersihkan path
+    $cleanPath = str_replace('public/', '', $pendaftar->berkas);
 
-        // Membersihkan path dari kata 'public/' jika ada
-        $cleanPath = str_replace('public/', '', $pendaftar->berkas);
+    // Cek path lengkap di server (Linux path)
+    $fullPath = storage_path('app/public/' . $cleanPath);
 
-        if (Storage::disk('public')->exists($cleanPath)) {
-            return Storage::disk('public')->download($cleanPath);
-        }
+    // --- MATIKAN PROGRAM & TAMPILKAN INFO (DEBUG) ---
+    dd([
+        'ID' => $id,
+        'Nama File di Database' => $pendaftar->berkas,
+        'Path Bersih' => $cleanPath,
+        'Lokasi Full di Server' => $fullPath,
+        'Apakah File Ada?' => file_exists($fullPath) ? 'ADA' : 'TIDAK ADA (ZONK)',
+        'Cek Storage Laravel' => Storage::disk('public')->exists($cleanPath) ? 'ADA' : 'TIDAK TERBACA'
+    ]);
 
-        return back()->with('error', 'File fisik tidak ditemukan. Path: ' . $cleanPath);
-    }
+    // ... kode bawahnya abaikan dulu karena program akan mati di dd()
 }

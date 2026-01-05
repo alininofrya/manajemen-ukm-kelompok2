@@ -55,6 +55,29 @@ public function anggotaIndex(Request $request)
 
     $ukm = Ukm::find($member->ukm_id);
 
+    public function downloadBerkas($id)
+{
+    // Cari data pendaftar
+    $pendaftar = \App\Models\Pendaftaran::findOrFail($id); // Sesuaikan nama Modelmu
+
+    // Cek apakah kolom berkas ada isinya
+    if (!$pendaftar->berkas) {
+        return back()->with('error', 'File tidak ditemukan di database.');
+    }
+
+    // Cek fisik file di storage
+    // Asumsi: file tersimpan langsung di dalam folder 'storage/app/public'
+    // Jika ada di folder sub, misal 'uploads', ubah jadi: 'uploads/' . $pendaftar->berkas
+    $path = $pendaftar->berkas;
+
+    // Gunakan disk 'public'
+    if (Storage::disk('public')->exists($path)) {
+        return Storage::disk('public')->download($path);
+    }
+
+    return back()->with('error', 'File fisik tidak ditemukan di server.');
+}
+
     // --- LOGIKA PENCARIAN & PAGINATION ---
     $query = Member::where('ukm_id', $ukm->id)->with('user');
 

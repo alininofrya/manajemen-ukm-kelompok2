@@ -21,6 +21,7 @@ Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
 Route::post('/login', [AuthController::class, 'login'])->name('login.post');
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
+Route::get('/pengurus/download/{id}', [PengurusController::class, 'downloadBerkas'])->name('pengurus.download');
 
 // --- AUTHENTICATED ROUTES (Wajib Login) ---
 Route::middleware(['auth'])->group(function () {

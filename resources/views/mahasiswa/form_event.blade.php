@@ -17,13 +17,11 @@
                         enctype="multipart/form-data">
                         @csrf
                         <div class="mb-4">
-                            <label class="form-label fw-bold">Upload Berkas Persyaratan</label>
-                            <input type="file" name="berkas" class="form-control @error('berkas') is-invalid @enderror"
-                                required>
-                            @error('berkas')
-                                <div class="invalid-feedback">{{ $message }}</div>
-                            @enderror
-                            <div class="form-text text-muted">Format: PDF, JPG, PNG (Max: 2MB)</div>
+                            <div class="form-group">
+                                <label>Alasan Mendaftar</label>
+                                <textarea name="alasan" class="form-control" rows="4" placeholder="Tuliskan alasan kamu mengikuti event ini..."
+                                    required></textarea>
+                            </div>
                         </div>
 
                         <div class="d-flex justify-content-between">

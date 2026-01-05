@@ -30,7 +30,7 @@
                                         <tr>
                                             <th class="border-0">Nama Mahasiswa</th>
                                             <th class="border-0">Event yang Diikuti</th>
-                                            <th class="border-0">Berkas</th>
+                                            <th class="border-0" style="width: 30%;">Alasan Mendaftar</th>
                                             <th class="border-0">Status</th>
                                             <th class="border-0 text-center">Aksi</th>
                                         </tr>
@@ -65,17 +65,37 @@
                                                     </div>
                                                 </td>
                                                 <td><span class="text-muted">{{ $data->event->nama_event }}</span></td>
-                                                <td class="text-center">
-                                                    @if ($data->berkas)
-                                                        <a href="{{ route('pengurus.download', $data->id) }}"
-                                                            class="btn btn-sm btn-outline-secondary btn-round"
-                                                            target="_blank">
-                                                            <i class="fas fa-file-pdf"></i> Lihat Berkas
-                                                        </a>
-                                                    @else
-                                                        <span class="badge badge-danger">Tidak ada berkas</span>
-                                                    @endif
+                                                <td>
+                                                    <div class="d-flex flex-column">
+                                                        <span class="text-muted small fst-italic">
+                                                            "{{ Str::limit($data->berkas, 50) }}"
+                                                        </span>
+                                                        @if(strlen($data->berkas) > 50)
+                                                            <a href="#" class="text-primary small mt-1" data-bs-toggle="modal" data-bs-target="#modalAlasan{{ $data->id }}">
+                                                                [Baca Selengkapnya]
+                                                            </a>
+
+                                                            <div class="modal fade" id="modalAlasan{{ $data->id }}" tabindex="-1" aria-hidden="true">
+                                                                <div class="modal-dialog">
+                                                                    <div class="modal-content">
+                                                                        <div class="modal-header">
+                                                                            <h5 class="modal-title fw-bold">Alasan {{ $data->user->name }}</h5>
+                                                                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                                                        </div>
+                                                                        <div class="modal-body">
+                                                                            <p class="text-dark">{{ $data->berkas }}</p>
+                                                                        </div>
+                                                                        <div class="modal-footer">
+                                                                            <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Tutup</button>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        @endif
+                                                    </div>
                                                 </td>
+                                                {{-- SELESAI UBAH --}}
+
                                                 <td>
                                                     @if ($data->status == 'pending')
                                                         <span class="badge bg-warning shadow-sm"><i

@@ -36,7 +36,6 @@
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        {{-- Letakkan ini di atas tabel atau di bawah navbar --}}
                                         @if (session('error'))
                                             <div class="alert alert-danger alert-dismissible fade show" role="alert">
                                                 <strong>Gagal!</strong> {{ session('error') }}
@@ -67,8 +66,8 @@
                                                 </td>
                                                 <td><span class="text-muted">{{ $data->event->nama_event }}</span></td>
                                                 <td class="text-center">
-                                                    @if ($pendaftaran->berkas)
-                                                        <a href="{{ route('pengurus.download', $pendaftaran->id) }}"
+                                                    @if ($data->berkas)
+                                                        <a href="{{ route('pengurus.download', $data->id) }}"
                                                             class="btn btn-sm btn-outline-secondary btn-round"
                                                             target="_blank">
                                                             <i class="fas fa-file-pdf"></i> Lihat Berkas

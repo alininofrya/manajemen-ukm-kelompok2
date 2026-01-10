@@ -96,6 +96,22 @@
         <h3><i class="fa fa-graduation-cap text-primary me-2"></i>UKM PRO</h3>
         <p class="text-center text-muted mb-4">Silakan masuk ke akun Anda</p>
 
+        @if ($errors->has('login'))
+            <div class="alert alert-danger text-center">
+                Email atau password yang kamu masukkan salah.
+            </div>
+        @endif
+
+        @if ($errors->any() && !$errors->has('login'))
+            <div class="alert alert-danger">
+                <ul class="mb-0">
+                    @foreach ($errors->all() as $error)
+                        <li>{{ $error }}</li>
+                    @endforeach
+                </ul>
+            </div>
+        @endif
+
         <form action="{{ route('login') }}" method="POST">
             @csrf
             <div class="mb-3">
@@ -103,8 +119,8 @@
                 <div class="input-group">
                     <span class="input-group-text bg-light border-end-0"><i
                             class="fa fa-envelope text-muted"></i></span>
-                    <input type="email" name="email" class="form-control border-start-0" placeholder="nama@email.com"
-                        required autofocus>
+                    <input type="email" name="email" class="form-control border-start-0"
+                        placeholder="nama@email.com" required autofocus>
                 </div>
             </div>
 

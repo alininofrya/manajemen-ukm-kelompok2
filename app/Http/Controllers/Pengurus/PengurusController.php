@@ -3,179 +3,115 @@
 namespace App\Http\Controllers\Pengurus;
 
 use App\Http\Controllers\Controller;
-use App\Models\Member;
 use App\Models\Event;
-use App\Models\Ukm;
-use App\Models\User;
-use App\Models\Pendaftaran; // Pastikan nama model sesuai file (Pendaftar atau Pendaftaran)
+use App\Models\Member;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Storage; // Wajib ada
+use Illuminate\Support\Facades\Storage;
 
-class PengurusController extends Controller
+class EventController extends Controller
 {
+    // =========================
+    // LIST EVENT
+    // =========================
     public function index()
     {
-        $member = Member::where('user_id', Auth::id())->first();
-        if (!$member) return redirect('/')->with('error', 'Akun Anda tidak terdaftar sebagai Pengurus UKM.');
+        $member = Member::where('user_id', Auth::id())->firstOrFail();
 
-        $ukm = Ukm::find($member->ukm_id);
-        if (!$ukm) return redirect('/')->with('error', 'Data UKM tidak ditemukan.');
+        $events = Event::where('ukm_id', $member->ukm_id)->latest()->get();
 
-        $totalEvent = Event::where('ukm_id', $ukm->id)->count();
-        $totalAnggota = Member::where('ukm_id', $ukm->id)->count();
-
-        $pendaftarTerbaru = Pendaftaran::whereHas('event', function ($query) use ($ukm) {
-            $query->where('ukm_id', $ukm->id);
-        })->with(['user', 'event'])->latest()->take(5)->get();
-
-        $events = Event::where('ukm_id', $ukm->id)->latest()->get();
-
-        return view('pengurus.dashboard', compact('ukm', 'member', 'totalEvent', 'totalAnggota', 'events', 'pendaftarTerbaru'));
+        return view('pengurus.event.index', compact('events'));
     }
 
-    public function anggotaIndex(Request $request)
+    // =========================
+    // FORM EDIT EVENT
+    // =========================
+    public function edit($id)
     {
-        $member = Member::where('user_id', Auth::id())->first();
-        if (!$member) return redirect()->back()->with('error', 'Akses ditolak.');
+        $member = Member::where('user_id', Auth::id())->firstOrFail();
 
-        $ukm = Ukm::find($member->ukm_id);
+        $event = Event::where('id', $id)
+            ->where('ukm_id', $member->ukm_id)
+            ->firstOrFail();
 
-        $query = Member::where('ukm_id', $ukm->id)->with('user');
-
-        if ($request->has('search')) {
-            $search = $request->search;
-            $query->whereHas('user', function($q) use ($search) {
-                $q->where('name', 'LIKE', "%{$search}%")
-                  ->orWhere('email', 'LIKE', "%{$search}%");
-            })->orWhere('jabatan', 'LIKE', "%{$search}%")
-              ->where('ukm_id', $ukm->id);
-        }
-
-        $anggota = $query->paginate(10)->appends(['search' => $request->search]);
-
-        $users = User::where('role', 'mahasiswa')
-            ->whereDoesntHave('member', function ($query) use ($ukm) {
-                $query->where('ukm_id', $ukm->id);
-            })->get();
-
-        return view('pengurus.anggota.index', compact('ukm', 'anggota', 'users'));
+        return view('pengurus.event.edit', compact('event'));
     }
 
-    public function anggotaStore(Request $request)
+    // =========================
+    // UPDATE EVENT (UPLOAD POSTER JPG / PNG)
+    // =========================
+    public function update(Request $request, $id)
     {
-        $admin = Member::where('user_id', Auth::id())->first();
-        if (!$admin) return redirect()->back()->with('error', 'Akses Ditolak.');
+        $member = Member::where('user_id', Auth::id())->firstOrFail();
 
+        $event = Event::where('id', $id)
+            ->where('ukm_id', $member->ukm_id)
+            ->firstOrFail();
+
+        // 🔐 VALIDASI
         $request->validate([
-            'user_id' => 'required|exists:users,id',
-            'jabatan' => 'required|string|max:255'
+            'nama_event' => 'required|string|max:255',
+            'tanggal'    => 'required|date',
+            'lokasi'     => 'required|string|max:255',
+            'deskripsi'  => 'required|string',
+
+            // HANYA JPG & PNG
+            'poster'     => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
         ]);
 
-        $exists = Member::where('user_id', $request->user_id)
-            ->where('ukm_id', $admin->ukm_id)
-            ->exists();
-
-        if ($exists) return redirect()->back()->with('error', 'Mahasiswa ini sudah terdaftar.');
-
-        Member::create([
-            'user_id' => $request->user_id,
-            'ukm_id' => $admin->ukm_id,
-            'jabatan' => $request->jabatan,
+        // =========================
+        // UPDATE DATA EVENT
+        // =========================
+        $event->update([
+            'nama_event' => $request->nama_event,
+            'tanggal'    => $request->tanggal,
+            'lokasi'     => $request->lokasi,
+            'deskripsi'  => $request->deskripsi,
         ]);
 
-        return redirect()->back()->with('success', 'Anggota berhasil ditambahkan!');
-    }
+        // =========================
+        // UPLOAD POSTER BARU (JIKA ADA)
+        // =========================
+        if ($request->hasFile('poster')) {
 
-    public function anggotaUpdate(Request $request, $id)
-    {
-        $member = Member::findOrFail($id);
+            // Hapus poster lama
+            if ($event->poster && Storage::disk('public')->exists('poster_event/' . $event->poster)) {
+                Storage::disk('public')->delete('poster_event/' . $event->poster);
+            }
 
-        $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:users,email,' . $member->user_id,
-            'jabatan' => 'required|string|max:255',
-        ]);
+            // Simpan poster baru
+            $file = $request->file('poster');
+            $namaFile = time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
 
-        $member->update(['jabatan' => $request->jabatan]);
+            $file->storeAs('poster_event', $namaFile, 'public');
 
-        $user = User::findOrFail($member->user_id);
-        $user->update([
-            'name' => $request->name,
-            'email' => $request->email
-        ]);
-
-        return redirect()->back()->with('success', 'Data anggota berhasil diperbarui!');
-    }
-
-    public function anggotaDestroy($id)
-    {
-        $member = Member::findOrFail($id);
-        $member->delete();
-        return redirect()->back()->with('success', 'Anggota berhasil dihapus!');
-    }
-
-    public function pendaftar()
-    {
-        $member = Member::where('user_id', Auth::id())->first();
-        if (!$member) return redirect('/')->with('error', 'Akses Ditolak.');
-
-        $pendaftarans = Pendaftaran::whereHas('event', function ($query) use ($member) {
-            $query->where('ukm_id', $member->ukm_id);
-        })->with(['user', 'event'])->latest()->get();
-
-        return view('pengurus.pendaftar.index', compact('pendaftarans'));
-    }
-
-    public function updateStatus(Request $request, $id)
-    {
-        $pendaftaran = Pendaftaran::findOrFail($id);
-        $pendaftaran->update(['status' => $request->status]);
-        return redirect()->back()->with('success', 'Status berhasil diperbarui!');
-    }
-
-    // --- FUNGSI DOWNLOAD BERKAS (SUDAH DI TEMPAT YANG BENAR) ---
-// Ganti nama fungsinya biar lebih sesuai, atau biarkan downloadBerkas tapi isinya ini:
-public function downloadBerkas($id)
-    {
-        $pendaftar = Pendaftaran::findOrFail($id);
-
-        if (!$pendaftar->berkas) {
-            return back()->with('error', 'File tidak ditemukan di database.');
+            $event->poster = $namaFile;
+            $event->save();
         }
 
-        // 1. Bersihkan nama file
-        // Kadang database nyimpen "public/foto.jpg", kadang cuma "foto.jpg"
-        $rawPath = $pendaftar->berkas;
-        $cleanPath = str_replace(['public/', 'storage/'], '', $rawPath);
+        return redirect()
+            ->route('pengurus.event.index')
+            ->with('success', 'Event berhasil diperbarui!');
+    }
 
-        // --- CEK GUDANG A (Storage Link) ---
-        $pathStorage = storage_path('app/public/' . $cleanPath);
+    // =========================
+    // HAPUS EVENT + POSTER
+    // =========================
+    public function destroy($id)
+    {
+        $member = Member::where('user_id', Auth::id())->firstOrFail();
 
-        // --- CEK GUDANG B (Public Folder Langsung) ---
-        // Ini sering kejadian kalau pakai $file->move() bukan $file->store()
-        $pathPublic = public_path($rawPath);
-        $pathPublicClean = public_path($cleanPath);
-        $pathUploads = public_path('uploads/' . $cleanPath);
+        $event = Event::where('id', $id)
+            ->where('ukm_id', $member->ukm_id)
+            ->firstOrFail();
 
-        $finalPath = null;
-
-        if (file_exists($pathStorage)) {
-            $finalPath = $pathStorage;
-        } elseif (file_exists($pathPublic)) {
-            $finalPath = $pathPublic;
-        } elseif (file_exists($pathPublicClean)) {
-            $finalPath = $pathPublicClean;
-        } elseif (file_exists($pathUploads)) {
-            $finalPath = $pathUploads;
+        // Hapus poster
+        if ($event->poster && Storage::disk('public')->exists('poster_event/' . $event->poster)) {
+            Storage::disk('public')->delete('poster_event/' . $event->poster);
         }
 
-        if ($finalPath) {
-            return response()->file($finalPath, [
-                'Content-Type' => mime_content_type($finalPath)
-            ]);
-        }
+        $event->delete();
 
-        return back()->with('error', "Gagal! File tidak ditemukan di: Storage maupun Public Folder. (Nama File: $cleanPath)");
+        return redirect()->back()->with('success', 'Event berhasil dihapus!');
     }
 }

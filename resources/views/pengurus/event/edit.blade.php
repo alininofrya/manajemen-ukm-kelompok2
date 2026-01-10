@@ -34,14 +34,19 @@
                                 <div class="col-md-6">
                                     <div class="form-group">
                                         <label for="deskripsi">Deskripsi Event</label>
-                                        <textarea class="form-control" id="deskripsi" name="deskripsi" rows="5"
-                                            required>{{ old('deskripsi', $event->deskripsi) }}</textarea>
+                                        <textarea class="form-control" id="deskripsi" name="deskripsi" rows="5" required>{{ old('deskripsi', $event->deskripsi) }}</textarea>
                                     </div>
-                                    <div class="form-group">
-                                        <label for="poster">Poster Baru (Kosongkan jika tidak ingin ganti)</label>
-                                        <input type="file" class="form-control" id="poster" name="poster">
-                                        <small class="text-muted">Poster saat ini: {{ $event->poster }}</small>
-                                    </div>
+                                    <input type="file" class="form-control" id="poster" name="poster"
+                                        accept=".jpg,.jpeg,.png">
+
+                                    @error('poster')
+                                        <small class="text-danger">{{ $message }}</small>
+                                    @enderror
+
+                                    <small class="text-muted">
+                                        Poster saat ini: {{ $event->poster }}
+                                    </small>
+
                                 </div>
                             </div>
                         </div>
